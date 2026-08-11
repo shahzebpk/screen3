@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gourmet Menu Showcase</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #050505;
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 16:9 Aspect Ratio Container */
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 56.25vw;
+            max-height: 100vh;
+            max-width: 177.78vh;
+            background: #f8f9fa;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.95);
+        }
+
+        /* Fullscreen Toggle Button */
+        .fullscreen-btn {
+            position: absolute;
+            top: 4%;
+            left: 4%;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            border: none;
+            padding: 0.8vw 1.6vw;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 1vw;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 30px;
+            z-index: 100;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fullscreen-btn:hover {
+            background-color: #ffcc00;
+            color: #1a1a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 204, 0, 0.4);
+        }
+
+        .fullscreen-btn.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Background watermarked text */
+        .bg-watermark {
+            position: absolute;
+            top: 12%;
+            left: 4%;
+            font-size: 14vw;
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.03);
+            text-transform: uppercase;
+            letter-spacing: -3px;
+            z-index: 1;
+            white-space: nowrap;
+            pointer-events: none;
+            font-family: 'Segoe UI', sans-serif;
+            transition: all 0.6s ease;
+        }
+
+        /* Vibrant yellow and black accent block on the left */
+        .accent-block {
+            position: absolute;
+            left: 0;
+            top: 20%;
+            width: 24vw;
+            height: 60%;
+            background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%);
+            z-index: 2;
+            box-shadow: 10px 0 30px rgba(255, 204, 0, 0.2);
+            clip-path: polygon(0 0, 100% 5%, 85% 50%, 100% 95%, 0 100%);
+        }
+
+        /* Slide item */
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 6%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
+            z-index: 3;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .slide.active .plate-container {
+            transform: scale(1) rotate(0deg);
+            opacity: 1;
+        }
+
+        .slide.active .info-card {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Left Side: Food Image in a Plate */
+        .image-side {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 4;
+        }
+
+        .plate-container {
+            width: 35vw;
+            height: 35vw;
+            max-height: 72vh;
+            max-width: 72vh;
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), inset 0 0 25px rgba(0,0,0,0.06);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2.5%;
+            position: relative;
+            transform: scale(0.9) rotate(-5deg);
+            opacity: 0;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.8s ease;
+        }
+
+        .plate-container::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ffcc00, transparent, #1a1a1a);
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        .plate-container img {
+            width: 92%;
+            height: 92%;
+            object-fit: cover;
+            border-radius: 50%;
+            filter: contrast(1.05) saturate(1.1);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        /* Right Side: Information Card */
+        .content-side {
+            flex: 1.1;
+            display: flex;
+            justify-content: flex-start;
+            padding-left: 4%;
+            z-index: 4;
+        }
+
+        .info-card {
+            background: #ffffff;
+            width: 40vw;
+            padding: 4vw;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
+            position: relative;
+            border-radius: 12px;
+            border-left: 6px solid #ffcc00;
+            transform: translateY(30px);
+            opacity: 0;
+            transition: transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.8s ease;
+        }
+
+        /* Item Number Tag */
+        .item-number-badge {
+            position: absolute;
+            top: -1.6vw;
+            right: 3vw;
+            background-color: #1a1a1a;
+            color: #ffcc00;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 1.5vw;
+            font-weight: 800;
+            padding: 0.6vw 1.3vw;
+            border-radius: 6px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .item-title {
+            color: #1a1a1a;
+            font-size: 3vw;
+            font-weight: 900;
+            line-height: 1.15;
+            margin-bottom: 1.5vh;
+            text-transform: capitalize;
+            letter-spacing: -0.5px;
+        }
+
+        .item-desc {
+            color: #555555;
+            font-size: 1.15vw;
+            line-height: 1.6;
+            margin-bottom: 3vh;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .item-price {
+            color: #1a1a1a;
+            background-color: #ffcc00;
+            display: inline-block;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 1.8vw;
+            font-weight: 900;
+            padding: 0.4vw 1.2vw;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(255, 204, 0, 0.3);
+        }
+
+        /* Category Indicator Overlay */
+        .category-header {
+            position: absolute;
+            top: 4.5%;
+            right: 5%;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 1.2vw;
+            font-weight: 800;
+            color: #333333;
+            background: #ffffff;
+            padding: 0.5vw 1.5vw;
+            border-radius: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            z-index: 5;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.06);
+        }
+
+        /* Floating sparkles */
+        .sparkle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ffcc00;
+            border-radius: 50%;
+            z-index: 2;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.6; }
+            50% { transform: translateY(-15px) scale(1.3); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="slideshow-container">
+        <!-- Fullscreen Button -->
+        <button class="fullscreen-btn" id="fullscreen-btn" onclick="toggleFullScreen()">⛶ Full Screen</button>
+
+        <!-- Background Elements -->
+        <div class="accent-block"></div>
+        <div class="bg-watermark" id="bg-watermark">Menu</div>
+        <div class="category-header" id="category-header">Bread Selection</div>
+
+        <!-- Decorative particles -->
+        <div class="sparkle" style="top: 25%; left: 30%; animation-delay: 0s;"></div>
+        <div class="sparkle" style="bottom: 20%; left: 45%; animation-delay: 1.5s;"></div>
+        <div class="sparkle" style="top: 75%; right: 25%; animation-delay: 2.5s;"></div>
+        
+        <!-- Slides generated dynamically -->
+    </div>
+
+    <script>
+        // Complete dataset of all 33 items mapped to images 1.png up to 33.png
+        const menuItems = [
+            // BREAD SELECTION (1 - 14)
+            { category: "BREAD SELECTION", name: "Plain Naan", price: "€2.50", desc: "Freshly baked traditional tandoori flatbread brushed with subtle golden butter." },
+            { category: "BREAD SELECTION", name: "Garlic Naan", price: "€3.20", desc: "Soft tandoori bread garnished with finely chopped garlic and fresh aromatic herbs." },
+            { category: "BREAD SELECTION", name: "Potato Stuffed Naan", price: "€4.50", desc: "Warm fluffy naan stuffed with seasoned savory mashed potatoes and spices." },
+            { category: "BREAD SELECTION", name: "Minced Meat Stuffed Naan", price: "€5.90", desc: "Rich and savory naan stuffed with delicately spiced minced meat." },
+            { category: "BREAD SELECTION", name: "Cheese Stuffed Naan", price: "€4.50", desc: "Golden fluffy naan filled with melting gooey artisan cheese." },
+            { category: "BREAD SELECTION", name: "Sweet Peshawari Naan", price: "€4.50", desc: "Traditional sweet naan stuffed with premium dry fruits, coconut, and nuts." },
+            { category: "BREAD SELECTION", name: "Tandoori Paratha", price: "€3.50", desc: "Flaky, layered whole wheat bread cooked to absolute perfection in the tandoor." },
+            { category: "BREAD SELECTION", name: "Aloo Paratha", price: "€4.50", desc: "Whole wheat layered flatbread stuffed with spiced potato filling." },
+            { category: "BREAD SELECTION", name: "Qeema Paratha", price: "€5.90", desc: "Hearty paratha stuffed with flavorful spiced minced meat." },
+            { category: "BREAD SELECTION", name: "Lacha Paratha", price: "€3.50", desc: "Crispy multi-layered golden brown flatbread with rich texture." },
+            { category: "BREAD SELECTION", name: "Tandoori Roti", price: "€2.50", desc: "Traditional rustic whole wheat flatbread baked in the authentic clay oven." },
+            { category: "BREAD SELECTION", name: "Chapati", price: "€2.90", desc: "Soft and light homemade style traditional flatbread." },
+            { category: "BREAD SELECTION", name: "Poori", price: "€3.50", desc: "Deep-fried light, airy, and golden puffed bread." },
+            { category: "BREAD SELECTION", name: "Bhatura", price: "€3.90", desc: "Large, fluffy deep-fried leavened bread." },
+
+            // RICE & BIRYANI (15 - 23)
+            { category: "RICE & BIRYANI", name: "Veg Biryani", price: "€8.20", desc: "Fragrant basmati rice layered with seasoned fresh mixed vegetables and herbs." },
+            { category: "RICE & BIRYANI", name: "Chicken Biryani", price: "€12.50", desc: "Aromatic basmati rice cooked with tender chicken and authentic spices." },
+            { category: "RICE & BIRYANI", name: "Lamb Biryani", price: "€14.90", desc: "Juicy tender lamb pieces simmered with saffron rice and fragrant herbs." },
+            { category: "RICE & BIRYANI", name: "Prawn Biryani", price: "€16.90", desc: "Succulent prawns cooked in spiced rice with aromatic herbs." },
+            { category: "RICE & BIRYANI", name: "Egg Fried Rice", price: "€7.90", desc: "Wok-tossed rice with scrambled eggs and fresh spring onions." },
+            { category: "RICE & BIRYANI", name: "Biryani Rice", price: "€5.50", desc: "Spiced aromatic yellow and white layered basmati rice." },
+            { category: "RICE & BIRYANI", name: "Jeera Rice", price: "€4.90", desc: "Basmati rice tempered with aromatic cumin seeds and butter." },
+            { category: "RICE & BIRYANI", name: "Plain Rice", price: "€3.90", desc: "Steamed fluffy long-grain basmati rice." },
+            { category: "RICE & BIRYANI", name: "Sweet Rice (Zarda)", price: "€5.50", desc: "Traditional sweet celebratory yellow rice with nuts and raisins." },
+
+            // FRESH SALADS (24 - 27)
+            { category: "FRESH SALADS", name: "Mix Salad", price: "€3.90", desc: "Crisp garden-fresh seasonal vegetables chopped to perfection." },
+            { category: "FRESH SALADS", name: "Mediterranean Salad", price: "€5.90", desc: "Tomatoes, cucumbers, olives, and feta cheese tossed with zesty dressing." },
+            { category: "FRESH SALADS", name: "Chicken Salad", price: "€8.90", desc: "Grilled tender chicken strips served atop a bed of crisp greens." },
+            { category: "FRESH SALADS", name: "Prawn Salad", price: "€10.90", desc: "Juicy seasoned prawns served over a fresh garden salad." },
+
+            // SIDES & CONDIMENTS (28 - 33)
+            { category: "SIDES & CONDIMENTS", name: "Plain Yogurt", price: "€1.90", desc: "Cool and refreshing natural set yogurt." },
+            { category: "SIDES & CONDIMENTS", name: "Raita", price: "€3.00", desc: "Yogurt blended with diced cucumbers, tomatoes, and roasted cumin." },
+            { category: "SIDES & CONDIMENTS", name: "Mango Pickle", price: "€1.90", desc: "Traditional tangy and spicy raw mango pickle condiment." },
+            { category: "SIDES & CONDIMENTS", name: "Mango Chutney", price: "€1.90", desc: "Sweet and mildly spiced chunky mango preserve." },
+            { category: "SIDES & CONDIMENTS", name: "Plum Sauce", price: "€1.90", desc: "Sweet, sour, and fruity dipping sauce." },
+            { category: "SIDES & CONDIMENTS", name: "Curry Sauce", price: "€4.00", desc: "Rich, aromatic, and savory spiced gravy sauce." }
+        ];
+
+        const container = document.getElementById('slideshow-container');
+        const watermarkEl = document.getElementById('bg-watermark');
+        const categoryHeaderEl = document.getElementById('category-header');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        
+        let slidesHTML = '';
+
+        menuItems.forEach((item, index) => {
+            const imageNumber = index + 1; // Maps 1 to 33.png exactly
+            const imgUrl = `${imageNumber}.png`;
+            const itemNum = String(imageNumber).padStart(2, '0');
+
+            slidesHTML += `
+                <div class="slide ${index === 0 ? 'active' : ''}" data-category="${item.category}" data-name="${item.name}">
+                    <div class="image-side">
+                        <div class="plate-container">
+                            <img src="${imgUrl}" alt="${item.name}" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80'">
+                        </div>
+                    </div>
+                    <div class="content-side">
+                        <div class="info-card">
+                            <div class="item-number-badge">${itemNum}</div>
+                            <h2 class="item-title">${item.name}</h2>
+                            <p class="item-desc">${item.desc}</p>
+                            <div class="item-price">${item.price}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.insertAdjacentHTML('beforeend', slidesHTML);
+
+        // Fullscreen Toggle
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    alert(`Error attempting full-screen mode: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        document.addEventListener("fullscreenchange", () => {
+            if (document.fullscreenElement) {
+                fullscreenBtn.classList.add('hidden');
+            } else {
+                fullscreenBtn.classList.remove('hidden');
+            }
+        });
+
+        // Slideshow Loop (7 seconds per item)
+        const slides = document.querySelectorAll('.slide');
+        let currentSlide = 0;
+
+        function updateSlide(index) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (index + slides.length) % slides.length;
+            
+            const activeSlide = slides[currentSlide];
+            activeSlide.classList.add('active');
+
+            watermarkEl.textContent = activeSlide.getAttribute('data-name').split(' ')[0];
+            categoryHeaderEl.textContent = activeSlide.getAttribute('data-category');
+        }
+
+        setInterval(() => {
+            updateSlide(currentSlide + 1);
+        }, 7000);
+    </script>
+</body>
+</html>
